@@ -384,6 +384,48 @@
 
         // Initialize
         updateOrderSummary();
+
+        async function placeOrder() {
+            const form = document.getElementById('checkout-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const paymentMethod = document.querySelector('input[name="payment-method"]:checked').value;
+            
+            try {
+                if (paymentMethod === 'credit-card') {
+                    const cardNumber = document.getElementById('card-number').value;
+                    const expiryDate = document.getElementById('expiry-date').value;
+                    const cvv = document.getElementById('cvv').value;
+
+                    // For testing purposes, we'll just simulate a successful payment
+                    if (cardNumber === '4242424242424242') {
+                        // Simulate payment processing
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                        
+                        // Clear cart and show success message
+                        localStorage.removeItem('cart');
+                        alert('Order placed successfully! Thank you for your purchase.');
+                        window.location.href = 'index.html';
+                    } else {
+                        alert('Payment failed. Please check your card details and try again.');
+                    }
+                } else if (paymentMethod === 'paypal') {
+                    // For PayPal, we'll just simulate a successful payment
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    // Clear cart and show success message
+                    localStorage.removeItem('cart');
+                    alert('Order placed successfully! Thank you for your purchase.');
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('An error occurred while processing your payment. Please try again.');
+            }
+        }
     </script>
 </body>
 </html> 
