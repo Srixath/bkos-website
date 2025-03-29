@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - BKOS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .cart-container {
+            max-width: 1200px;
+            margin: 100px auto;
+            padding: 20px;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .cart-items {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-right: 20px;
+        }
+
+        .item-details {
+            flex-grow: 1;
+        }
+
+        .item-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .item-color {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .item-price {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quantity-btn {
+            background: #f0f0f0;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .quantity-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .remove-item {
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .cart-summary {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .checkout-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .checkout-btn:hover {
+            background: #2980b9;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .empty-cart i {
+            font-size: 4rem;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+
+        .continue-shopping {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">BKOS</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="index.html#features">Features</a>
+            <a href="index.html#technology">Technology</a>
+            <a href="index.html#research">Research</a>
+            <a href="index.html#contact">Contact</a>
+        </div>
+        <div class="cart-icon">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="cart-count">0</span>
+        </div>
+    </nav>
+
+    <div class="cart-container">
+        <div class="cart-header">
+            <h1>Shopping Cart</h1>
+            <a href="index.html" class="continue-shopping">Continue Shopping</a>
+        </div>
+
+        <div class="cart-items">
+            <!-- Cart items will be dynamically added here -->
+        </div>
+
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span>$0.00</span>
+            </div>
+            <div class="summary-row">
+                <span>Shipping</span>
+                <span>Free</span>
+            </div>
+            <div class="summary-row">
+                <span>Tax</span>
+                <span>$0.00</span>
+            </div>
+            <div class="summary-row">
+                <span>Total</span>
+                <span>$0.00</span>
+            </div>
+            <button class="checkout-btn">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <script>
+        // Cart functionality
+        const cartItemsContainer = document.querySelector('.cart-items');
+        const cartCount = document.querySelector('.cart-count');
+        let itemsInCart = parseInt(localStorage.getItem('cartCount')) || 0;
+        let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+
+        // Update cart count
+        function updateCartCount() {
+            cartCount.textContent = itemsInCart;
+            localStorage.setItem('cartCount', itemsInCart);
+        }
+
+        // Update cart display
+        function updateCartDisplay() {
+            if (cartItems.length === 0) {
+                cartItemsContainer.innerHTML = `
+                    <div class="empty-cart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <h2>Your cart is empty</h2>
+                        <p>Add some items to your cart to see them here!</p>
+                        <a href="index.html" class="continue-shopping">Continue Shopping</a>
+                    </div>
+                `;
+                return;
+            }
+
+            let total = 0;
+            cartItemsContainer.innerHTML = cartItems.map((item, index) => {
+                total += item.price;
+                return `
+                    <div class="cart-item">
+                        <img src="${item.image}" alt="BKOS Knee Brace">
+                        <div class="item-details">
+                            <div class="item-name">BKOS Knee Brace</div>
+                            <div class="item-color">Color: ${item.color.charAt(0).toUpperCase() + item.color.slice(1)}</div>
+                            <div class="item-price">$${item.price.toFixed(2)}</div>
+                        </div>
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="updateQuantity(${index}, -1)">-</button>
+                            <span>1</span>
+                            <button class="quantity-btn" onclick="updateQuantity(${index}, 1)">+</button>
+                        </div>
+                        <div class="remove-item" onclick="removeItem(${index})">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update summary
+            const tax = total * 0.1; // 10% tax
+            const finalTotal = total + tax;
+            
+            document.querySelector('.summary-row:nth-child(1) span:last-child').textContent = `$${total.toFixed(2)}`;
+            document.querySelector('.summary-row:nth-child(3) span:last-child').textContent = `$${tax.toFixed(2)}`;
+            document.querySelector('.summary-row:last-child span:last-child').textContent = `$${finalTotal.toFixed(2)}`;
+        }
+
+        // Update quantity
+        function updateQuantity(index, change) {
+            const item = cartItems[index];
+            if (change < 0 && item.quantity <= 1) return;
+            
+            item.quantity = (item.quantity || 1) + change;
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            updateCartDisplay();
+        }
+
+        // Remove item
+        function removeItem(index) {
+            cartItems.splice(index, 1);
+            itemsInCart = cartItems.length;
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            updateCartCount();
+            updateCartDisplay();
+        }
+
+        // Initialize cart
+        updateCartCount();
+        updateCartDisplay();
+    </script>
+</body>
+</html> 

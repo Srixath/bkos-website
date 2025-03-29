@@ -17,7 +17,7 @@
             <a href="#research">Research</a>
             <a href="#contact">Contact</a>
         </div>
-        <a href="#technology" class="cart-icon">
+        <a href="cart.html" class="cart-icon">
             <i class="fas fa-shopping-cart"></i>
             <span class="cart-count">0</span>
         </a>
@@ -158,7 +158,10 @@
         const colorButtons = document.querySelectorAll('.color-btn');
         const productImage = document.querySelector('.product-image');
         const cartCount = document.querySelector('.cart-count');
-        let itemsInCart = 0;
+        
+        // Load cart count from localStorage
+        let itemsInCart = parseInt(localStorage.getItem('cartCount')) || 0;
+        cartCount.textContent = itemsInCart;
         
         // Define image paths for each color
         const colorImages = {
@@ -186,7 +189,26 @@
         // Add to cart functionality
         const addToCartButton = document.querySelector('.add-to-cart');
         addToCartButton.addEventListener('click', () => {
-            itemsInCart++;
+            // Get selected color
+            const selectedColorBtn = document.querySelector('.color-btn.active');
+            const selectedColor = selectedColorBtn ? selectedColorBtn.getAttribute('data-color') : 'black';
+            
+            // Get current cart items
+            let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            
+            // Add new item
+            cartItems.push({
+                color: selectedColor,
+                price: 299.99,
+                image: colorImages[selectedColor]
+            });
+            
+            // Update localStorage
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            itemsInCart = cartItems.length;
+            localStorage.setItem('cartCount', itemsInCart);
+            
+            // Update display
             cartCount.textContent = itemsInCart;
             
             // Add animation to cart icon
