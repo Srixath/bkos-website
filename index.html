@@ -129,6 +129,20 @@
         </div>
     </section>
 
+    <section class="newsletter-section">
+        <div class="newsletter-container">
+            <h2>Get Special Offers & Updates</h2>
+            <p>Subscribe to our newsletter to receive exclusive discounts, product updates, and special offers!</p>
+            <form id="newsletter-form" class="newsletter-form">
+                <div class="form-group">
+                    <input type="email" id="newsletter-email" name="email" placeholder="Enter your email" required>
+                </div>
+                <button type="submit" class="subscribe-btn">Subscribe</button>
+            </form>
+            <div id="newsletter-message" class="newsletter-message"></div>
+        </div>
+    </section>
+
     <footer>
         <div class="footer-content">
             <div class="footer-section">
@@ -217,6 +231,42 @@
             setTimeout(() => {
                 cartIcon.classList.remove('bounce');
             }, 300);
+        });
+
+        // Newsletter Form Handler
+        document.getElementById('newsletter-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('newsletter-email').value;
+            const messageDiv = document.getElementById('newsletter-message');
+            
+            try {
+                // Replace YOUR_MAILCHIMP_SERVER_PREFIX and YOUR_MAILCHIMP_LIST_ID with your actual values
+                const response = await fetch('https://YOUR_MAILCHIMP_SERVER_PREFIX.api.mailchimp.com/3.0/lists/YOUR_MAILCHIMP_LIST_ID/members', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic YOUR_MAILCHIMP_API_KEY'
+                    },
+                    body: JSON.stringify({
+                        email_address: email,
+                        status: 'subscribed'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.textContent = 'Thank you for subscribing! You will receive our next offer soon.';
+                    messageDiv.className = 'newsletter-message success';
+                    document.getElementById('newsletter-email').value = '';
+                } else {
+                    throw new Error(data.detail || 'Subscription failed');
+                }
+            } catch (error) {
+                messageDiv.textContent = 'An error occurred. Please try again later.';
+                messageDiv.className = 'newsletter-message error';
+            }
         });
     </script>
 </body>

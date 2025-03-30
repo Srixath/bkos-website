@@ -1,0 +1,25 @@
+{
+  "name": "cursor-projects",
+  "version": "1.0.0",
+  "description": "A modern website showcasing the Biomechanical Knee Orthotic System (BKOS), an advanced knee protection solution.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Srixath/bkos-website.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Srixath/bkos-website/issues"
+  },
+  "homepage": "https://github.com/Srixath/bkos-website#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
