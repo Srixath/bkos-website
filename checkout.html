@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Add Stripe.js -->
     <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
     <style>
         .checkout-container {
             max-width: 1200px;
@@ -262,128 +263,105 @@
         </div>
 
         <div class="order-summary">
-            <h2>Order Summary</h2>
-            <div class="order-items">
-                <!-- Order items will be dynamically added here -->
-            </div>
-            <div class="order-total">
-                <div class="total-row">
-                    <span>Subtotal</span>
-                    <span>$0.00</span>
+            <h3>Order Summary</h3>
+            <div id="order-items"></div>
+            <div class="order-totals">
+                <div class="subtotal">
+                    <span>Subtotal:</span>
+                    <span id="order-subtotal">$0.00</span>
                 </div>
-                <div class="total-row">
-                    <span>Shipping</span>
-                    <span>Free</span>
+                <div class="shipping">
+                    <span>Shipping:</span>
+                    <span>$10.00</span>
                 </div>
-                <div class="total-row">
-                    <span>Tax</span>
-                    <span>$0.00</span>
+                <div class="tax">
+                    <span>Tax (10%):</span>
+                    <span id="order-tax">$0.00</span>
                 </div>
-                <div class="total-row final">
-                    <span>Total</span>
-                    <span>$0.00</span>
+                <div class="total">
+                    <span>Total:</span>
+                    <span id="order-total">$0.00</span>
                 </div>
             </div>
-            <button class="place-order-btn">Place Order</button>
+            <button type="button" class="place-order-btn" onclick="placeOrder()">Place Order</button>
         </div>
     </div>
 
     <script>
         // Initialize Stripe
-        const stripe = Stripe('your_publishable_key'); // Replace with your Stripe publishable key
+        const stripe = Stripe('YOUR_STRIPE_PUBLISHABLE_KEY');
         
-        // Load cart data
-        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-        const orderItemsContainer = document.querySelector('.order-items');
-        
+        // Initialize PayPal
+        paypal.Buttons({
+            createOrder: function(data, actions) {
+                const cart = JSON.parse(localStorage.getItem('cart')) || [];
+                const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+                const shipping = 10.00;
+                const tax = subtotal * 0.1;
+                const total = subtotal + shipping + tax;
+
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: total.toFixed(2)
+                        }
+                    }]
+                });
+            },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    // Clear cart and show success message
+                    localStorage.removeItem('cart');
+                    alert('Order placed successfully! Thank you for your purchase.');
+                    window.location.href = 'index.html';
+                });
+            }
+        }).render('#paypal-button-container');
+
+        // Handle payment method selection
+        document.querySelectorAll('input[name="payment-method"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('credit-card-fields').style.display = 
+                    this.value === 'credit-card' ? 'block' : 'none';
+                document.getElementById('paypal-fields').style.display = 
+                    this.value === 'paypal' ? 'block' : 'none';
+            });
+        });
+
         // Update order summary
         function updateOrderSummary() {
-            if (cartItems.length === 0) {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const orderItems = document.getElementById('order-items');
+            const subtotalElement = document.getElementById('order-subtotal');
+            const taxElement = document.getElementById('order-tax');
+            const totalElement = document.getElementById('order-total');
+
+            if (cart.length === 0) {
                 window.location.href = 'cart.html';
                 return;
             }
 
-            let total = 0;
-            orderItemsContainer.innerHTML = cartItems.map(item => {
-                total += item.price;
-                return `
-                    <div class="order-item">
-                        <img src="images/product.jpg" alt="BKOS Knee Brace">
-                        <div class="order-item-details">
-                            <div class="order-item-name">BKOS Knee Brace</div>
-                            <div class="order-item-color">Color: ${item.color.charAt(0).toUpperCase() + item.color.slice(1)}</div>
-                            <div class="order-item-price">$${item.price.toFixed(2)}</div>
-                        </div>
+            orderItems.innerHTML = cart.map(item => `
+                <div class="order-item">
+                    <img src="images/product.jpg" alt="${item.name}">
+                    <div class="item-details">
+                        <h4>${item.name}</h4>
+                        <p>Color: ${item.color}</p>
+                        <p>Quantity: ${item.quantity}</p>
+                        <p>Price: $${(item.price * item.quantity).toFixed(2)}</p>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
 
-            const tax = total * 0.1; // 10% tax
-            const finalTotal = total + tax;
+            const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            const shipping = 10.00;
+            const tax = subtotal * 0.1;
+            const total = subtotal + shipping + tax;
 
-            document.querySelector('.total-row:nth-child(1) span:last-child').textContent = `$${total.toFixed(2)}`;
-            document.querySelector('.total-row:nth-child(3) span:last-child').textContent = `$${tax.toFixed(2)}`;
-            document.querySelector('.total-row.final span:last-child').textContent = `$${finalTotal.toFixed(2)}`;
+            subtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+            taxElement.textContent = `$${tax.toFixed(2)}`;
+            totalElement.textContent = `$${total.toFixed(2)}`;
         }
-
-        // Payment method selection
-        const paymentMethods = document.querySelectorAll('.payment-method');
-        paymentMethods.forEach(method => {
-            method.addEventListener('click', () => {
-                paymentMethods.forEach(m => m.classList.remove('selected'));
-                method.classList.add('selected');
-            });
-        });
-
-        // Handle form submission
-        const form = document.querySelector('.checkout-form');
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            
-            const selectedPaymentMethod = document.querySelector('.payment-method.selected').textContent.trim();
-            
-            if (selectedPaymentMethod === 'Credit Card') {
-                // Create payment method
-                const cardNumber = document.querySelector('input[type="text"]').value;
-                const expiryDate = document.querySelector('input[placeholder="MM/YY"]').value;
-                const cvv = document.querySelector('input[type="text"]:last-child').value;
-
-                try {
-                    // Create payment method with Stripe
-                    const {paymentMethod, error} = await stripe.createPaymentMethod({
-                        type: 'card',
-                        card: {
-                            number: cardNumber,
-                            exp_month: parseInt(expiryDate.split('/')[0]),
-                            exp_year: parseInt(expiryDate.split('/')[1]),
-                            cvc: cvv
-                        }
-                    });
-
-                    if (error) {
-                        alert(error.message);
-                        return;
-                    }
-
-                    // Here you would typically send the paymentMethod.id to your server
-                    // to create a charge or payment intent
-                    
-                    // For demo purposes, we'll just show a success message
-                    alert('Payment successful!');
-                    localStorage.removeItem('cartItems');
-                    localStorage.removeItem('cartCount');
-                    window.location.href = 'index.html';
-                } catch (error) {
-                    alert('Payment failed. Please try again.');
-                }
-            } else if (selectedPaymentMethod === 'PayPal') {
-                // Redirect to PayPal
-                window.location.href = 'https://www.paypal.com/checkout';
-            }
-        });
-
-        // Initialize
-        updateOrderSummary();
 
         async function placeOrder() {
             const form = document.getElementById('checkout-form');
@@ -400,20 +378,24 @@
                     const expiryDate = document.getElementById('expiry-date').value;
                     const cvv = document.getElementById('cvv').value;
 
-                    // For testing purposes, we'll just simulate a successful payment
-                    if (cardNumber === '4242424242424242') {
-                        // Simulate payment processing
-                        await new Promise(resolve => setTimeout(resolve, 1500));
-                        
-                        // Clear cart and show success message
-                        localStorage.removeItem('cart');
-                        alert('Order placed successfully! Thank you for your purchase.');
-                        window.location.href = 'index.html';
-                    } else {
-                        alert('Payment failed. Please check your card details and try again.');
+                    // Create payment method with Stripe
+                    const { paymentMethod, error } = await stripe.createPaymentMethod({
+                        type: 'card',
+                        card: {
+                            number: cardNumber,
+                            exp_month: parseInt(expiryDate.split('/')[0]),
+                            exp_year: parseInt(expiryDate.split('/')[1]),
+                            cvc: cvv
+                        }
+                    });
+
+                    if (error) {
+                        alert('Payment failed: ' + error.message);
+                        return;
                     }
-                } else if (paymentMethod === 'paypal') {
-                    // For PayPal, we'll just simulate a successful payment
+
+                    // Here you would typically send the paymentMethod.id to your server
+                    // For now, we'll simulate a successful payment
                     await new Promise(resolve => setTimeout(resolve, 1500));
                     
                     // Clear cart and show success message
@@ -426,6 +408,9 @@
                 alert('An error occurred while processing your payment. Please try again.');
             }
         }
+
+        // Initialize
+        updateOrderSummary();
     </script>
 </body>
 </html> 
